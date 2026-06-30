@@ -1,0 +1,9 @@
+# Logisim autosave files
+*.autosave
+
+# macOS
+.DS_Store
+
+# Editor temp
+*.swp
+*~
