@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全加器是怎么拼出来的 · 交互讲解</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f5f0;
+    --card: #ffffff;
+    --line: #e9e3d6;
+    --line-soft: #f0eadf;
+    --text: #14171e;
+    --muted: #7c7a72;
+    --primary: #c97b3f;
+    --primary-soft: rgba(201, 123, 63, 0.1);
+    --accent: #2f6f5e;
+    --accent-soft: rgba(47, 111, 94, 0.1);
+    --danger: #b06367;
+    --danger-soft: rgba(176, 99, 103, 0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Outfit', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    font-size: 15px;
+    padding: 48px 24px 80px;
+  }
+
+  .container {
+    max-width: 920px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  header {
+    margin-bottom: 56px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--line);
+  }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    font-size: 38px;
+    line-height: 1.15;
+    letter-spacing: -0.005em;
+    margin-bottom: 16px;
+  }
+  .lede {
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 640px;
+  }
+
+  /* Section */
+  section {
+    margin-bottom: 56px;
+  }
+  h2 {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    font-size: 26px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 24px 0 12px;
+  }
+  p { margin-bottom: 12px; color: #3a4256; }
+  strong { color: var(--text); font-weight: 600; }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    margin: 20px 0;
+  }
+
+  /* Toggle switches */
+  .toggle-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+  .toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    cursor: pointer;
+    user-select: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    transition: all 0.15s ease;
+  }
+  .toggle:hover { transform: translateY(-1px); border-color: var(--primary); }
+  .toggle-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--line);
+    transition: all 0.15s ease;
+  }
+  .toggle.on { border-color: var(--primary); background: var(--primary-soft); }
+  .toggle.on .toggle-dot { background: var(--primary); box-shadow: 0 0 0 4px var(--primary-soft); }
+  .toggle .label-text { font-weight: 500; }
+  .toggle .val { color: var(--muted); margin-left: 4px; }
+
+  /* LED indicator */
+  .led-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin: 12px 0;
+    flex-wrap: wrap;
+  }
+  .led {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .led-bulb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--line);
+    transition: all 0.2s ease;
+    border: 1px solid var(--line);
+  }
+  .led.on .led-bulb {
+    background: var(--primary);
+    box-shadow: 0 0 12px var(--primary), 0 0 4px var(--primary);
+    border-color: var(--primary);
+  }
+  .led.on { color: var(--text); font-weight: 500; }
+
+  /* Truth table */
+  table.truth {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    margin: 16px 0;
+  }
+  table.truth th, table.truth td {
+    padding: 10px 12px;
+    text-align: center;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  table.truth th {
+    font-weight: 600;
+    color: var(--muted);
+    background: var(--bg);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  table.truth tr.match {
+    background: var(--primary-soft);
+  }
+  table.truth tr.match td {
+    font-weight: 600;
+    color: var(--primary);
+  }
+  table.truth td.carry { color: var(--danger); font-weight: 500; }
+
+  /* SVG circuit */
+  .circuit-wrap {
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 16px 0;
+    overflow-x: auto;
+  }
+  svg.circuit { display: block; margin: 0 auto; }
+
+  /* Wiring diagram */
+  .wiring {
+    margin: 16px 0;
+  }
+  .wire-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+  }
+  .wire-from, .wire-to {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 6px 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+  }
+  .wire-from.highlight, .wire-to.highlight {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-weight: 600;
+  }
+  .wire-from { text-align: right; }
+  .wire-arrow {
+    color: var(--muted);
+    font-size: 18px;
+  }
+  .wire-from.highlight + .wire-arrow, .wire-to.highlight {
+    color: var(--primary);
+  }
+
+  /* Demo example */
+  .example-box {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+  }
+  .example-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+  }
+  .binary-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 24px;
+    margin: 8px 0;
+  }
+  .bit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    transition: all 0.2s;
+  }
+  .bit.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    font-weight: 600;
+  }
+  .bit.carry {
+    background: var(--danger);
+    color: white;
+    border-color: var(--danger);
+  }
+  .bit.sum {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+  .bit-pos {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  /* Note callout */
+  .callout {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    padding: 16px 20px;
+    border-radius: 0 8px 8px 0;
+    margin: 20px 0;
+    font-size: 14px;
+  }
+  .callout strong { color: var(--accent); }
+
+  /* Two-column */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  @media (max-width: 640px) {
+    .two-col { grid-template-columns: 1fr; }
+    h1 { font-size: 30px; }
+    .toggle-row { gap: 8px; }
+  }
+
+  /* Summary box */
+  .summary {
+    background: var(--card);
+    border: 2px solid var(--primary);
+    border-radius: 16px;
+    padding: 28px;
+    margin: 32px 0;
+  }
+  .summary h3 { color: var(--primary); margin-top: 0; }
+
+  /* Footer */
+  footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <div class="eyebrow">L1.2 · 全加器(Full Adder)</div>
+  <h1>为什么半加器不够用,全加器又是怎么拼出来的</h1>
+  <p class="lede">两个问题,一张图讲清楚。点下面的开关,跟着电路一起跑。</p>
+</header>
+
+<!-- ============ SECTION 1: 为什么半加器不够 ============ -->
+<section>
+  <h2><span class="step-num">1</span>先看半加器为什么搞不定</h2>
+  <p>半加器的能力就一条:<strong>算两个 1 位数,输出"和" + "进位"</strong>。</p>
+
+  <div class="card">
+    <h3>用半加器算 <code>5 + 3</code> —— 看看它什么时候掉链子</h3>
+    <p style="color: var(--muted); font-size: 14px;">二进制: <code>101 + 011 = 1000</code>。从右往左一位位算。</p>
+
+    <div class="example-box">
+      <div class="example-title">第 1 列(最右边):1 + 1</div>
+      <div class="binary-row">
+        <span class="bit">1</span>
+        <span style="color: var(--muted);">+</span>
+        <span class="bit">1</span>
+      </div>
+      <p style="text-align: center; color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+        半加器上场 → 本位 = 0,产生进位 = 1
+      </p>
+      <div class="binary-row">
+        <span class="bit carry">1</span>
+        <span class="bit sum">0</span>
+      </div>
+      <div class="bit-pos">↑ 送给下一列 &nbsp;&nbsp;&nbsp; ↑ 本位结果</div>
+    </div>
+
+    <div class="example-box" style="background: var(--danger-soft); border-color: var(--danger);">
+      <div class="example-title" style="color: var(--danger);">第 2 列(中间):0 + 1 ← 进位 1 来了!</div>
+      <div class="binary-row">
+        <span class="bit">0</span>
+        <span style="color: var(--muted);">+</span>
+        <span class="bit">1</span>
+        <span style="color: var(--danger);">+</span>
+        <span class="bit carry">1</span>
+        <span style="color: var(--danger); font-family: 'JetBrains Mono'; font-size: 12px;">← 上一列送来的</span>
+      </div>
+      <p style="text-align: center; color: var(--danger); font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600;">
+        ⚠️ 半加器只有两只手(A 和 B),接不住第三个"进位"!
+      </p>
+      <p style="text-align: center; color: var(--muted); font-size: 13px; margin-top: 8px;">
+        真实答案是 2(二进制 <code>10</code>),但半加器只能给你 <code>0+1=1</code>。<strong>错了。</strong>
+      </p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>问题根源:</strong>多位加法从右往左算时,<strong>每一列都要接收右边那列送过来的"进位"</strong>。半加器接口不够,接不住这个进位 → 必须升级成"全加器",多一个输入口。
+  </div>
+</section>
+
+<!-- ============ SECTION 2: 全加器的输入输出 ============ -->
+<section>
+  <h2><span class="step-num">2</span>全加器 = 半加器 + 一个进位入口</h2>
+  <p>全加器跟半加器的区别<strong>就一点</strong>:多了一个输入口 <code>Cin</code>(carry in),用来接"上一列送来的进位"。</p>
+
+  <div class="two-col">
+    <div class="card">
+      <h3 style="color: var(--muted);">半加器</h3>
+      <svg width="100%" viewBox="0 0 240 160" style="margin: 8px auto;">
+        <!-- Pin A -->
+        <rect x="10" y="40" width="20" height="20" rx="3" fill="#fff" stroke="#e9e3d6"/>
+        <text x="20" y="55" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#14171e">A</text>
+        <line x1="30" y1="50" x2="100" y2="60" stroke="#14171e" stroke-width="1.5"/>
+
+        <!-- Pin B -->
+        <rect x="10" y="100" width="20" height="20" rx="3" fill="#fff" stroke="#e9e3d6"/>
+        <text x="20" y="115" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#14171e">B</text>
+        <line x1="30" y1="110" x2="100" y2="100" stroke="#14171e" stroke-width="1.5"/>
+
+        <!-- Box -->
+        <rect x="100" y="55" width="80" height="50" rx="8" fill="#fff" stroke="#e9e3d6" stroke-width="2"/>
+        <text x="140" y="85" text-anchor="middle" font-family="DM Serif Display" font-size="16" fill="#14171e">半加器</text>
+
+        <!-- Output S -->
+        <line x1="180" y1="65" x2="220" y2="65" stroke="#14171e" stroke-width="1.5"/>
+        <rect x="220" y="55" width="20" height="20" rx="3" fill="#fff" stroke="#e9e3d6"/>
+        <text x="230" y="70" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#14171e">S</text>
+
+        <!-- Output C -->
+        <line x1="180" y1="95" x2="220" y2="95" stroke="#14171e" stroke-width="1.5"/>
+        <rect x="220" y="85" width="20" height="20" rx="3" fill="#fff" stroke="#e9e3d6"/>
+        <text x="230" y="100" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#14171e">C</text>
+      </svg>
+      <p style="text-align: center; color: var(--muted); font-size: 13px;">2 输入,2 输出</p>
+    </div>
+
+    <div class="card" style="border-color: var(--primary);">
+      <h3 style="color: var(--primary);">全加器</h3>
+      <svg width="100%" viewBox="0 0 240 180" style="margin: 8px auto;">
+        <!-- Pin A -->
+        <rect x="10" y="30" width="20" height="20" rx="3" fill="#fff" stroke="#c97b3f" stroke-width="2"/>
+        <text x="20" y="45" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#14171e">A</text>
+        <line x1="30" y1="40" x2="100" y2="60" stroke="#14171e" stroke-width="1.5"/>
+
+        <!-- Pin B -->
+        <rect x="10" y="80" width="20" height="20" rx="3" fill="#fff" stroke="#c97b3f" stroke-width="2"/>
+        <text x="20" y="95" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#14171e">B</text>
+        <line x1="30" y1="90" x2="100" y2="90" stroke="#14171e" stroke-width="1.5"/>
+
+        <!-- Pin Cin (NEW) -->
+        <rect x="10" y="130" width="20" height="20" rx="3" fill="#c97b3f" stroke="#c97b3f"/>
+        <text x="20" y="145" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="white" font-weight="600">C</text>
+        <text x="42" y="145" font-family="JetBrains Mono" font-size="9" fill="#c97b3f">in</text>
+        <line x1="30" y1="140" x2="100" y2="120" stroke="#c97b3f" stroke-width="2"/>
+
+        <!-- Box -->
+        <rect x="100" y="55" width="80" height="80" rx="8" fill="#fff" stroke="#c97b3f" stroke-width="2"/>
+        <text x="140" y="100" text-anchor="middle" font-family="DM Serif Display" font-size="16" fill="#c97b3f">全加器</text>
+
+        <!-- Output S -->
+        <line x1="180" y1="70" x2="220" y2="70" stroke="#14171e" stroke-width="1.5"/>
+        <rect x="220" y="60" width="20" height="20" rx="3" fill="#fff" stroke="#e9e3d6"/>
+        <text x="230" y="75" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#14171e">S</text>
+
+        <!-- Output Cout -->
+        <line x1="180" y1="120" x2="220" y2="120" stroke="#14171e" stroke-width="1.5"/>
+        <rect x="220" y="110" width="20" height="20" rx="3" fill="#fff" stroke="#e9e3d6"/>
+        <text x="230" y="125" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#14171e">C</text>
+        <text x="245" y="125" font-family="JetBrains Mono" font-size="9" fill="#c97b3f">out</text>
+      </svg>
+      <p style="text-align: center; color: var(--primary); font-size: 13px; font-weight: 600;">3 输入,2 输出(多了一个 Cin)</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTION 3: 真值表 + 交互 ============ -->
+<section>
+  <h2><span class="step-num">3</span>真值表:拨开关,看输出</h2>
+  <p>点下面三个开关,看 <code>S</code> 和 <code>Cout</code> 怎么变。<strong>特别留意 Cin=1 的那几行</strong>,那是半加器干不了的部分。</p>
+
+  <div class="card">
+    <div class="toggle-row">
+      <div class="toggle" id="t-A" data-bit="A">
+        <span class="toggle-dot"></span>
+        <span class="label-text">A</span>
+        <span class="val" id="v-A">0</span>
+      </div>
+      <div class="toggle" id="t-B" data-bit="B">
+        <span class="toggle-dot"></span>
+        <span class="label-text">B</span>
+        <span class="val" id="v-B">0</span>
+      </div>
+      <div class="toggle" id="t-Cin" data-bit="Cin">
+        <span class="toggle-dot"></span>
+        <span class="label-text">Cin</span>
+        <span class="val" id="v-Cin">0</span>
+      </div>
+    </div>
+
+    <div class="led-row">
+      <div class="led" id="l-S"><span class="led-bulb"></span>S = <span id="lv-S">0</span></div>
+      <div class="led" id="l-Cout"><span class="led-bulb"></span>Cout = <span id="lv-Cout">0</span></div>
+    </div>
+
+    <table class="truth" id="truth-table">
+      <thead>
+        <tr>
+          <th>Cin</th><th>A</th><th>B</th><th>S</th><th>Cout</th><th>说明</th>
+        </tr>
+      </thead>
+      <tbody id="truth-body">
+        <!-- filled by JS -->
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ SECTION 4: 怎么拼出来 ============ -->
+<section>
+  <h2><span class="step-num">4</span>怎么用两个半加器拼出全加器</h2>
+  <p>思路就一句话:<strong>既然半加器只能算 2 bit,那就把 3 bit 拆成"先算前 2 个,再算后 2 个"</strong>。</p>
+
+  <div class="card">
+    <h3>Step 1:半加器 1 算 A + B</h3>
+    <div class="wiring">
+      <div class="wire-row">
+        <div class="wire-from">A</div>
+        <div class="wire-arrow">→</div>
+        <div class="wire-to">半加器 1 输入</div>
+      </div>
+      <div class="wire-row">
+        <div class="wire-from">B</div>
+        <div class="wire-arrow">→</div>
+        <div class="wire-to">半加器 1 输入</div>
+      </div>
+    </div>
+    <p style="color: var(--muted); font-size: 13px;">半加器 1 输出两个东西:<code>S1</code>(本位的和)和 <code>C1</code>(这一层产生的进位)。</p>
+
+    <h3>Step 2:半加器 2 算 S1 + Cin</h3>
+    <div class="wiring">
+      <div class="wire-row">
+        <div class="wire-from">S1 (半加器1 输出)</div>
+        <div class="wire-arrow">→</div>
+        <div class="wire-to">半加器 2 输入</div>
+      </div>
+      <div class="wire-row">
+        <div class="wire-from">Cin</div>
+        <div class="wire-arrow">→</div>
+        <div class="wire-to">半加器 2 输入</div>
+      </div>
+    </div>
+    <p style="color: var(--muted); font-size: 13px;">半加器 2 输出两个东西:<code>S</code>(最终的本位)和 <code>C2</code>(这一层产生的进位)。</p>
+
+    <h3>Step 3:Cout = C1 OR C2</h3>
+    <p>两个进位 <code>C1</code> 和 <code>C2</code> <strong>只要有一个是 1,最终就要进位</strong>。所以用 OR 门合并:</p>
+    <div class="wiring">
+      <div class="wire-row">
+        <div class="wire-from">C1 (半加器1 进位)</div>
+        <div class="wire-arrow">→</div>
+        <div class="wire-to">OR 门输入</div>
+      </div>
+      <div class="wire-row">
+        <div class="wire-from">C2 (半加器2 进位)</div>
+        <div class="wire-arrow">→</div>
+        <div class="wire-to">OR 门输入</div>
+      </div>
+      <div class="wire-row">
+        <div class="wire-from highlight">Cout (最终进位)</div>
+        <div class="wire-arrow" style="color: var(--primary);">←</div>
+        <div class="wire-to highlight">OR 门输出</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full circuit SVG -->
+  <div class="card">
+    <h3>完整电路图:两个半加器 + 一个 OR 门</h3>
+    <div class="circuit-wrap">
+      <svg class="circuit" width="760" height="320" viewBox="0 0 760 320">
+        <!-- Input pins -->
+        <rect x="10" y="60" width="40" height="30" rx="5" fill="#fff" stroke="#c97b3f" stroke-width="2"/>
+        <text x="30" y="80" text-anchor="middle" font-family="JetBrains Mono" font-size="13" font-weight="600" fill="#c97b3f">A</text>
+
+        <rect x="10" y="140" width="40" height="30" rx="5" fill="#fff" stroke="#c97b3f" stroke-width="2"/>
+        <text x="30" y="160" text-anchor="middle" font-family="JetBrains Mono" font-size="13" font-weight="600" fill="#c97b3f">B</text>
+
+        <rect x="10" y="220" width="40" height="30" rx="5" fill="#fff" stroke="#c97b3f" stroke-width="2"/>
+        <text x="30" y="240" text-anchor="middle" font-family="JetBrains Mono" font-size="12" font-weight="600" fill="#c97b3f">Cin</text>
+
+        <!-- Half Adder 1 (XOR + AND) -->
+        <!-- XOR -->
+        <path d="M 130 50 L 110 70 L 130 90 L 110 110 L 90 110 L 90 50 Z" fill="#fff" stroke="#2f6f5e" stroke-width="2"/>
+        <text x="105" y="84" text-anchor="middle" font-family="Outfit" font-size="10" fill="#2f6f5e">XOR</text>
+
+        <!-- AND -->
+        <path d="M 130 130 L 110 150 L 110 190 L 130 190 L 130 170 Z M 130 150 L 90 150 L 90 190 L 130 190" fill="#fff" stroke="#2f6f5e" stroke-width="2"/>
+        <text x="105" y="174" text-anchor="middle" font-family="Outfit" font-size="10" fill="#2f6f5e">AND</text>
+
+        <!-- HA1 label -->
+        <text x="110" y="30" text-anchor="middle" font-family="Outfit" font-size="11" font-weight="600" fill="#2f6f5e">半加器 1</text>
+        <rect x="80" y="40" width="70" height="160" fill="none" stroke="#2f6f5e" stroke-width="1" stroke-dasharray="3,3" opacity="0.4" rx="8"/>
+
+        <!-- Wires from A -->
+        <line x1="50" y1="75" x2="90" y2="75" stroke="#14171e" stroke-width="1.5"/>
+        <line x1="90" y1="75" x2="90" y2="160" stroke="#14171e" stroke-width="1.5"/>
+        <line x1="90" y1="160" x2="110" y2="160" stroke="#14171e" stroke-width="1.5"/>
+
+        <!-- Wires from B -->
+        <line x1="50" y1="155" x2="110" y2="155" stroke="#14171e" stroke-width="1.5"/>
+
+        <!-- S1 wire -->
+        <line x1="130" y1="75" x2="280" y2="75" stroke="#14171e" stroke-width="1.5"/>
+        <text x="160" y="68" font-family="JetBrains Mono" font-size="11" fill="#7c7a72">S1</text>
+
+        <!-- C1 wire (goes down then right to OR) -->
+        <line x1="130" y1="170" x2="170" y2="170" stroke="#b06367" stroke-width="1.5"/>
+        <line x1="170" y1="170" x2="170" y2="240" stroke="#b06367" stroke-width="1.5"/>
+        <line x1="170" y1="240" x2="450" y2="240" stroke="#b06367" stroke-width="1.5"/>
+        <text x="175" y="162" font-family="JetBrains Mono" font-size="11" fill="#b06367">C1</text>
+
+        <!-- Half Adder 2 -->
+        <!-- XOR -->
+        <path d="M 320 50 L 300 70 L 320 90 L 300 110 L 280 110 L 280 50 Z" fill="#fff" stroke="#2f6f5e" stroke-width="2"/>
+        <text x="295" y="84" text-anchor="middle" font-family="Outfit" font-size="10" fill="#2f6f5e">XOR</text>
+
+        <!-- AND -->
+        <path d="M 320 130 L 300 150 L 300 190 L 320 190 L 320 170 Z M 320 150 L 280 150 L 280 190 L 320 190" fill="#fff" stroke="#2f6f5e" stroke-width="2"/>
+        <text x="295" y="174" text-anchor="middle" font-family="Outfit" font-size="10" fill="#2f6f5e">AND</text>
+
+        <!-- HA2 label -->
+        <text x="300" y="30" text-anchor="middle" font-family="Outfit" font-size="11" font-weight="600" fill="#2f6f5e">半加器 2</text>
+        <rect x="270" y="40" width="70" height="160" fill="none" stroke="#2f6f5e" stroke-width="1" stroke-dasharray="3,3" opacity="0.4" rx="8"/>
+
+        <!-- Wire from S1 to HA2 XOR -->
+        <line x1="280" y1="75" x2="300" y2="75" stroke="#14171e" stroke-width="1.5"/>
+
+        <!-- Wire from Cin to HA2 AND -->
+        <line x1="50" y1="235" x2="240" y2="235" stroke="#c97b3f" stroke-width="1.5"/>
+        <line x1="240" y1="235" x2="240" y2="170" stroke="#c97b3f" stroke-width="1.5"/>
+        <line x1="240" y1="170" x2="300" y2="170" stroke="#c97b3f" stroke-width="1.5"/>
+
+        <!-- S output -->
+        <line x1="320" y1="75" x2="640" y2="75" stroke="#2f6f5e" stroke-width="2"/>
+        <text x="380" y="68" font-family="JetBrains Mono" font-size="11" font-weight="600" fill="#2f6f5e">S</text>
+        <rect x="640" y="60" width="40" height="30" rx="5" fill="#fff" stroke="#2f6f5e" stroke-width="2"/>
+        <text x="660" y="80" text-anchor="middle" font-family="JetBrains Mono" font-size="13" font-weight="600" fill="#2f6f5e">S</text>
+
+        <!-- C2 wire (goes down to OR) -->
+        <line x1="320" y1="170" x2="380" y2="170" stroke="#b06367" stroke-width="1.5"/>
+        <line x1="380" y1="170" x2="380" y2="255" stroke="#b06367" stroke-width="1.5"/>
+        <line x1="380" y1="255" x2="450" y2="255" stroke="#b06367" stroke-width="1.5"/>
+        <text x="385" y="162" font-family="JetBrains Mono" font-size="11" fill="#b06367">C2</text>
+
+        <!-- OR gate -->
+        <path d="M 470 225 Q 510 240 470 270 L 450 270 Q 480 247 450 225 Z" fill="#fff" stroke="#c97b3f" stroke-width="2"/>
+        <text x="470" y="251" text-anchor="middle" font-family="Outfit" font-size="11" font-weight="600" fill="#c97b3f">OR</text>
+
+        <!-- Cout wire -->
+        <line x1="510" y1="247" x2="640" y2="247" stroke="#c97b3f" stroke-width="2"/>
+        <text x="540" y="240" font-family="JetBrains Mono" font-size="11" font-weight="600" fill="#c97b3f">Cout</text>
+        <rect x="640" y="232" width="40" height="30" rx="5" fill="#fff" stroke="#c97b3f" stroke-width="2"/>
+        <text x="660" y="252" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="600" fill="#c97b3f">Cout</text>
+
+        <!-- Cin dot indicator -->
+        <circle cx="240" cy="170" r="3" fill="#c97b3f"/>
+        <text x="248" y="160" font-family="JetBrains Mono" font-size="9" fill="#c97b3f">Cin</text>
+      </svg>
+    </div>
+    <p style="text-align: center; color: var(--muted); font-size: 13px;">
+      🟧 橙色 = Cin 路径 &nbsp;&nbsp; 🟥 红色 = 进位 &nbsp;&nbsp; 🟩 绿色 = 本位和
+    </p>
+  </div>
+</section>
+
+<!-- ============ SECTION 5: 跑一个真实算例 ============ -->
+<section>
+  <h2><span class="step-num">5</span>真算一次:A=1, B=1, Cin=1</h2>
+  <p>挑真值表最后一行 —— 半加器干不了的典型场景。</p>
+
+  <div class="card">
+    <div class="example-box">
+      <div class="example-title">A=1, B=1, Cin=1,期望 S=1, Cout=1</div>
+
+      <!-- Half adder 1 -->
+      <p style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #2f6f5e; margin-top: 12px;">
+        ▸ 半加器 1 算 1+1
+      </p>
+      <div style="display: flex; gap: 24px; padding: 8px 16px; background: var(--accent-soft); border-radius: 8px; margin: 8px 0;">
+        <div><span style="color: var(--muted); font-size: 12px;">S1</span> = <strong style="color: var(--accent); font-family: 'JetBrains Mono';">0</strong></div>
+        <div><span style="color: var(--muted); font-size: 12px;">C1</span> = <strong style="color: var(--danger); font-family: 'JetBrains Mono';">1</strong></div>
+      </div>
+
+      <!-- Half adder 2 -->
+      <p style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #2f6f5e;">
+        ▸ 半加器 2 算 S1+Cin = 0+1
+      </p>
+      <div style="display: flex; gap: 24px; padding: 8px 16px; background: var(--accent-soft); border-radius: 8px; margin: 8px 0;">
+        <div><span style="color: var(--muted); font-size: 12px;">S</span> = <strong style="color: var(--accent); font-family: 'JetBrains Mono';">1</strong></div>
+        <div><span style="color: var(--muted); font-size: 12px;">C2</span> = <strong style="color: var(--danger); font-family: 'JetBrains Mono';">0</strong></div>
+      </div>
+
+      <!-- OR -->
+      <p style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #c97b3f;">
+        ▸ OR 合并 C1 + C2 = 1 + 0
+      </p>
+      <div style="display: flex; gap: 24px; padding: 12px 16px; background: var(--primary-soft); border-radius: 8px; margin: 8px 0; border: 2px solid var(--primary);">
+        <div><span style="color: var(--muted); font-size: 12px;">Cout</span> = <strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-size: 16px;">1</strong></div>
+      </div>
+
+      <div style="text-align: center; margin-top: 16px; padding: 12px; background: var(--bg); border-radius: 8px;">
+        <span style="color: var(--muted); font-family: 'JetBrains Mono'; font-size: 13px;">最终结果:</span>
+        <span style="font-family: 'JetBrains Mono'; font-size: 18px; font-weight: 600;">
+          <span style="color: var(--danger);">Cout</span><span style="color: var(--accent);">S</span> = <span style="color: var(--danger);">1</span><span style="color: var(--accent);">1</span> = <strong>3</strong>
+        </span>
+        <span style="color: var(--muted); font-size: 13px; margin-left: 8px;">✓ 对照真值表,S=1, Cout=1</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SUMMARY ============ -->
+<section>
+  <div class="summary">
+    <h3>总结:全加器到底干了啥</h3>
+    <p><strong>1 个全加器 = 2 个半加器 + 1 个 OR 门</strong></p>
+    <p style="color: var(--muted);">3 输入 (A, B, Cin) · 2 输出 (S, Cout) · 共 5 个门(XOR×2 + AND×2 + OR×1)</p>
+
+    <p style="margin-top: 16px;"><strong>套路就一句话:</strong>先加两个,再加第三个。</p>
+    <ul style="margin: 12px 0 0 24px; color: #3a4256;">
+      <li>半加器 1:算 A + B → S1 + C1</li>
+      <li>半加器 2:算 S1 + Cin → S + C2</li>
+      <li>OR 门:C1 + C2 → Cout(只要任一进位,就输出 1)</li>
+    </ul>
+
+    <p style="margin-top: 16px;"><strong>为啥要这个套路?</strong></p>
+    <p style="color: var(--muted);">因为半加器接口不够,只能算 2 bit —— 我们手头又没有现成的"全加器零件",那就只能<strong>用现成的半加器</strong>去拼。这是工程上常见的"模块化复用"思路。</p>
+  </div>
+</section>
+
+<footer>
+  von-neumann-processor · L1.2 全加器 · 交互讲解
+</footer>
+
+</div>
+
+<script>
+  // ===== Truth table data =====
+  const truthData = [];
+  for (let Cin = 0; Cin <= 1; Cin++) {
+    for (let A = 0; A <= 1; A++) {
+      for (let B = 0; B <= 1; B++) {
+        // Half adder 1: A + B
+        const S1 = A ^ B;
+        const C1 = A & B;
+        // Half adder 2: S1 + Cin
+        const S = S1 ^ Cin;
+        const C2 = S1 & Cin;
+        // OR
+        const Cout = C1 | C2;
+        truthData.push({ Cin, A, B, S, Cout });
+      }
+    }
+  }
+
+  // ===== Render truth table =====
+  const tbody = document.getElementById('truth-body');
+  function renderTable(state) {
+    tbody.innerHTML = '';
+    truthData.forEach(row => {
+      const tr = document.createElement('tr');
+      const isMatch = row.A === state.A && row.B === state.B && row.Cin === state.Cin;
+      if (isMatch) tr.classList.add('match');
+      tr.innerHTML = `
+        <td>${row.Cin}</td>
+        <td>${row.A}</td>
+        <td>${row.B}</td>
+        <td>${row.S}</td>
+        <td class="carry">${row.Cout}</td>
+        <td style="text-align: left; color: var(--muted); font-family: Outfit, sans-serif;">
+          ${row.A}+${row.B}+${row.Cin}=${(row.Cout << 1) | row.S}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // ===== State + UI =====
+  const state = { A: 0, B: 0, Cin: 0 };
+
+  function update() {
+    // Update toggle visuals
+    ['A', 'B', 'Cin'].forEach(k => {
+      const t = document.getElementById('t-' + k);
+      if (state[k]) t.classList.add('on');
+      else t.classList.remove('on');
+      document.getElementById('v-' + k).textContent = state[k];
+    });
+
+    // Compute
+    const S1 = state.A ^ state.B;
+    const C1 = state.A & state.B;
+    const S = S1 ^ state.Cin;
+    const C2 = S1 & state.Cin;
+    const Cout = C1 | state.Cin ? 1 : (C2 | 0);
+    const finalCout = (C1 | C2);
+
+    // Update LEDs
+    document.getElementById('lv-S').textContent = S;
+    document.getElementById('lv-Cout').textContent = finalCout;
+    if (S) document.getElementById('l-S').classList.add('on');
+    else document.getElementById('l-S').classList.remove('on');
+    if (finalCout) document.getElementById('l-Cout').classList.add('on');
+    else document.getElementById('l-Cout').classList.remove('on');
+
+    renderTable(state);
+  }
+
+  ['A', 'B', 'Cin'].forEach(k => {
+    document.getElementById('t-' + k).addEventListener('click', () => {
+      state[k] = state[k] ? 0 : 1;
+      update();
+    });
+  });
+
+  update();
+</script>
+
+</body>
+</html>
